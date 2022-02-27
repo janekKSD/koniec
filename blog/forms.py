@@ -18,7 +18,7 @@ class LoginForm(FlaskForm):
 
     def validate_username(self, field):
         if field.data != Config.ADMIN_USERNAME:
-            raise ValidationError("Invalid username")
+            raise ValidationError("Invalid username") #wyrzuca błąd jak źle zamiast try
         return field.data
 
     def validate_password(self, field):

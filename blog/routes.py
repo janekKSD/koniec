@@ -15,12 +15,28 @@ def login_required(view_func):
        return redirect(url_for('login', next=request.path))
    return check_permissions
 
+def delete_entry(entry_id):
+    delete_draft = Entry.query.get(entry_id) #sprawdzić czy się zgadza
+    db.session.delete(delete_draft)
+    db.session.commit()
 
 @app.route("/")
 def index():
     all_posts = Entry.query.filter_by(is_published=True).order_by(Entry.pub_date.desc())
 
     return render_template("homepage.html", all_posts=all_posts)
+
+@app.route("/drafts/", methods=['GET', 'POST'])
+@login_required
+def list_drafts():
+    drafts = Entry.query.filter_by(is_published=False).order_by(Entry.pub_date.desc())
+    if request.method == 'POST':
+        data = request.form
+        entry_id = data.get('button_entry_id')
+        delete_entry(entry_id)
+        return redirect(url_for("index"))
+    
+    return render_template("drafts.html", drafts=drafts)
 
 
 @app.route("/edit-entry/<int:entry_id>", methods=["GET", "POST"])
@@ -37,6 +53,7 @@ def edit_entry(entry_id=None):
                 db.session.commit()
             else:
                 errors = form.errors
+            return redirect(url_for("index"))
     else:
         form = EntryForm()
         if request.method == 'POST':
@@ -46,10 +63,11 @@ def edit_entry(entry_id=None):
                 body=form.body.data,
                 is_published=form.is_published.data
                 )
-            db.session.add(entry)
-            db.session.commit()
-        else:
-            errors = form.errors
+                db.session.add(entry)
+                db.session.commit()
+            else:
+                errors = form.errors
+            return redirect(url_for("index"))
 
     return render_template("entry_form.html", form=form, errors=errors)
 
@@ -62,7 +80,7 @@ def login():
     if request.method == 'POST':
         if form.validate_on_submit():
             session['logged_in'] = True
-            session.permanent = True  # Use cookie to store session.
+            session.permanent = True  
             flash('You are now logged in.', 'success')
             return redirect(next_url or url_for('index'))
         else:
