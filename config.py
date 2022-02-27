@@ -1,13 +1,12 @@
-# blog/__init__.py
+# config.py
+import os
 
-from flask import Flask
-from config import Config
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-
-from blog import routes, models
+class Config:
+   SECRET_KEY = os.environ.get("SECRET_KEY") or "remember-to-add-secret-key"
+   SQLALCHEMY_DATABASE_URI = (
+           os.environ.get('DATABASE_URL') or
+           'sqlite:///' + os.path.join(BASE_DIR, 'blog_data.db')
+   )
+   SQLALCHEMY_TRACK_MODIFICATIONS = False
